@@ -2,6 +2,10 @@ from rest_framework import permissions
 
 
 class OwnerOrReadOnly(permissions.BasePermission):
+    """
+    Разрешаем внесение изменений только владельцу объекта
+    для всех остальных доступны безопасные методы.
+    """
 
     def has_permission(self, request, view):
         return (
@@ -13,10 +17,3 @@ class OwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user == obj.author
-
-
-class ReadOnly(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True

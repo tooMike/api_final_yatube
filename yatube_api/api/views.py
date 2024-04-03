@@ -1,14 +1,16 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework import mixins, permissions, viewsets, filters
+from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
-from posts.models import Comment, Group, Follow, Post
-from .serializers import CommentSerializer, FollowSerializer, GroupSerializer, PostSerializer
-from .permissions import OwnerOrReadOnly, ReadOnly
+from posts.models import Comment, Follow, Group, Post
+from .permissions import OwnerOrReadOnly
+from .serializers import (CommentSerializer, FollowSerializer,
+                          GroupSerializer, PostSerializer)
 
 
 class PostViewSet(viewsets.ModelViewSet):
+    """Обработка постов."""
+
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (OwnerOrReadOnly,)
@@ -19,6 +21,8 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """Обработка комментариев."""
+
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = (OwnerOrReadOnly,)
@@ -36,20 +40,16 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
+    """Обработка групп."""
+
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (permissions.AllowAny,)
 
 
-# class FollowViewSet(viewsets.ViewSet):
-    
-#     def list(self, request):
-#         queryset = Follow.objects.all()
-#         serializer = FollowSerializer(queryset, many=True)
-#         return Response(serializer.data)
-
-
 class FollowViewSet(viewsets.ModelViewSet):
+    """Обработка подписок."""
+
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     filter_backends = (filters.SearchFilter,)
