@@ -3,6 +3,8 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
+
 
 
 from posts.models import Comment, Group, Follow, Post, User
@@ -53,10 +55,20 @@ class FollowSerializer(serializers.ModelSerializer):
     following = serializers.SlugRelatedField(
         slug_field='username',
         queryset=User.objects.all(),
-
-
     )
 
     class Meta:
         fields = ('user', 'following')
         model = Follow
+
+    def validate_following(self, value):
+        user = self.context['request'].user
+        if user == value:
+            raise serializers.ValidationError(
+                "Нельзя подписаться на самого себя."
+            )
+        if Follow.objects.filter(user=user, following=value).exists():
+            raise serializers.ValidationError(
+                "Вы уже подписаны на этого пользователя."
+            )
+        return value
