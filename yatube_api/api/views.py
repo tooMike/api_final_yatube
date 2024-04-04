@@ -1,11 +1,11 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
-from posts.models import Comment, Follow, Group, Post
-from .permissions import OwnerOrReadOnly
-from .serializers import (CommentSerializer, FollowSerializer,
-                          GroupSerializer, PostSerializer)
+from api.permissions import IsOwnerOrReadOnly
+from api.serializers import (CommentSerializer, FollowSerializer,
+                             GroupSerializer, PostSerializer)
+from posts.models import Comment, Follow, Group, Post, User
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -13,7 +13,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = (OwnerOrReadOnly,)
+    permission_classes = (IsOwnerOrReadOnly,)
     pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
@@ -25,7 +25,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = (OwnerOrReadOnly,)
+    permission_classes = (IsOwnerOrReadOnly,)
 
     def get_post(self):
         """Метод для получения поста."""
@@ -47,7 +47,14 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.AllowAny,)
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class CreateListViewSet(mixins.ListModelMixin,
+                        mixins.CreateModelMixin,
+                        viewsets.GenericViewSet):
+    """Создаем класс с доступностью только POST запросов и
+    GET запросов с получением списка"""
+
+
+class FollowViewSet(CreateListViewSet):
     """Обработка подписок."""
 
     queryset = Follow.objects.all()
@@ -56,7 +63,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     search_fields = ('following__username',)
 
     def get_queryset(self):
-        return Follow.objects.filter(user=self.request.user)
+        return self.request.user.followers_set.all()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

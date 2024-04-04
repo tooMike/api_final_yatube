@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import F, Q
 
 
 User = get_user_model()
@@ -27,7 +28,10 @@ class Post(models.Model):
         upload_to='posts/', null=True, blank=True)
 
     def __str__(self):
-        return self.text
+        return self.text[:25]
+
+    class Meta:
+        ordering = ('pub_date',)
 
 
 class Comment(models.Model):
@@ -51,4 +55,13 @@ class Follow(models.Model):
         User, on_delete=models.CASCADE, related_name='following_set')
 
     class Meta:
-        unique_together = ('user', 'following')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'following'],
+                name='unique_follow'
+            ),
+            models.CheckConstraint(
+                check=~Q(user=F('following')),
+                name='prevent_self_follow'
+            )
+        ]

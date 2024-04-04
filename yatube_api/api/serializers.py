@@ -1,23 +1,9 @@
-import base64
-
-from django.core.files.base import ContentFile
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
 
 from posts.models import Comment, Follow, Group, Post, User
-
-
-class Base64ImageField(serializers.ImageField):
-    """Преобразование изображения."""
-
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -34,7 +20,7 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для комментариев."""
 
-    author = serializers.SlugRelatedField(
+    author = SlugRelatedField(
         read_only=True, slug_field='username'
     )
 
@@ -55,10 +41,12 @@ class GroupSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     """Сериализатор для подписок."""
 
-    user = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
+    user = SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
     )
-    following = serializers.SlugRelatedField(
+    following = SlugRelatedField(
         slug_field='username',
         queryset=User.objects.all(),
     )
@@ -66,6 +54,12 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('user', 'following')
         model = Follow
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=['user', 'following']
+            )
+        ]
 
     def validate_following(self, value):
         """
@@ -76,9 +70,5 @@ class FollowSerializer(serializers.ModelSerializer):
         if user == value:
             raise serializers.ValidationError(
                 "Нельзя подписаться на самого себя."
-            )
-        if Follow.objects.filter(user=user, following=value).exists():
-            raise serializers.ValidationError(
-                "Вы уже подписаны на этого пользователя."
             )
         return value
