@@ -2,6 +2,10 @@
 
 YaTube – проект, в котором пользовали могут создавать текстово-графические публикации, комментировать их и подписываться друг на друга. Проект продвигает концепцию свободного распространиния и общедоступности знаний  
 
+Проект запущен и доступен по адресу: https://nbmstaging.com
+
+Документация к API проекта доступна по адресу: https://nbmstaging.com/redoc/#tag/api
+
 # Автор проекта
 
 [Mikhail](https://github.com/tooMike)
@@ -18,36 +22,28 @@ git clone https://github.com/tooMike/api_final_yatube
 cd yatube_api
 ```
 
-Cоздать и активировать виртуальное окружение:
+Запустить сборку проекта:
 
 ```
-python3 -m venv env
+docker compose up
 ```
 
-```
-source env/bin/activate
-```
-
-Установить зависимости из файла requirements.txt:
+Выполнить сбор статики в контейнере backend:
 
 ```
-python3 -m pip install --upgrade pip
+docker compose exec backend python manage.py collectstatic
 ```
 
-```
-pip install -r requirements.txt
-```
-
-Выполнить миграции:
+Выполнить миграции в контейнере backend:
 
 ```
-python3 manage.py migrate
+docker compose exec backend python manage.py migrate
 ```
 
-Запустить проект:
+Проект будет доступен по адресу
 
 ```
-python3 manage.py runserver
+http://127.0.0.1:8000/
 ```
 
 # Спецификация
@@ -60,15 +56,7 @@ http://127.0.0.1:8000/redoc/
 
 # Основные технические требования
 
-Python==3.9.18
-
-Django==3.2.16
-
-djoser==2.1.0
-
-pytest==6.2.4
-
-
+Python==3.9
 
 # Примеры запросов к API
 
